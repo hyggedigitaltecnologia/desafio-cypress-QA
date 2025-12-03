@@ -1,79 +1,119 @@
-# Desafio Cypress QA - Netshoes
+# Desafio Cypress QA — Entrega Final
 
-Este repositório contém automação de testes com Cypress focado no site: `https://www.netshoes.com.br/`.
+Este repositório contém a automação de testes E2E desenvolvida em Cypress para o site: `https://www.netshoes.com.br`.
 
-## Objetivo
+Este README é a versão final preparada para entrega do desafio. Contém instruções para instalação, execução, geração de relatórios e informações sobre o CI configurado.
 
-Automatizar cenários de fluxo de carrinho (busca, adição de produto, remoção) aplicando boas práticas modernas de testes front-end com Cypress, reutilizando padrões de code Java robustos.
+## O que está neste repositório
 
-## Como instalar
+- Testes end-to-end focados no fluxo de carrinho (buscar produto, adicionar ao carrinho, visualizar/remover item).
+- Padrão Page Object para organização das páginas (`cypress/support/pages`).
+- Comandos customizados no arquivo `cypress/support/commands.js`.
+- Integração com Allure Report e captura de vídeos/screenshots por execução.
+- Workflows GitHub Actions para execução automática (push/PR) e execução manual (workflow_dispatch).
 
-Pré-requisitos: Node.js e npm instalados.
+## Requisitos
 
-No diretório do projeto, execute:
+- Node.js (v16+ recomendado)
+- npm ou yarn
+
+## Instalação
+
+No diretório do projeto:
 
 ```bash
-npm install
+npm ci
 ```
 
-## Como rodar os testes
+ou, se usar yarn:
 
-- Abrir a interface do Cypress (para desenvolvimento e debug):
+```bash
+yarn
+```
+
+## Executando os testes localmente
+
+- Abrir Cypress (modo interativo):
 
 ```bash
 npm run cy:open
 ```
 
-- Executar os testes em modo CI (headless):
+- Executar em modo headless (CI):
 
 ```bash
 npm test
+# ou
+npm run cy:run
 ```
 
-Você pode fornecer variáveis de ambiente para testes (ex.: `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`) usando `cypress.env.json` ou via `CYPRESS_TEST_USER_EMAIL` no ambiente.
+- Executar em um navegador específico (ex.: chrome):
 
-## Estrutura e boas práticas aplicadas
+```bash
+npx cypress run --browser chrome
+```
 
-- `cypress/e2e/netshoes-carrinho.spec.js`: testes end-to-end para fluxo de carrinho.
-- `cypress/support/pages/`: page objects (HomePage, SearchResultPage, ProductPage, CartPage) baseados em padrões Java robustos.
-- `cypress/support/commands.js`: comandos customizados reutilizáveis (`smartClick`, `smartType`, `waitForJsAndJQuery`).
-- `cypress.config.js`: baseUrl apontando para Netshoes, viewport desktop (1920x1080), timeout robusto.
+## Screenshots e vídeos
 
-A estrutura segue os mesmos padrões aplicados no código Java fornecido:
-- Page Objects para encapsular seletores e ações
-- Métodos reutilizáveis com tratamento de exceções
-- Waits implícitos e explícitos para elementos DOM dinâmicos
-- Fallback para JavaScript click quando click padrão falha
+- O projeto grava vídeos e screenshots de cada execução. Por padrão esses artefatos não são versionados; veja o `.gitignore`.
+- Estrutura local pós-execução:
 
-## Cenários automatizados (escolhas e justificativa)
+```
+cypress/videos/              # vídeo por spec
+cypress/screenshots/         # screenshots organizadas por teste
+allure-results/              # resultados gerados para Allure
+allure-report/               # relatório HTML gerado (após allure generate)
+```
 
-### 1. Buscar um produto e adicioná-lo ao carrinho
-- **Fluxo**: Home > Pesquisar "Tênis" > Clicar no primeiro produto > Selecionar tamanho (se houver) > Clicar "Comprar" > Validar notificação de sucesso.
-- **Justificativa**: Cenário core de qualquer e-commerce. Valida integração entre busca, página de produto e adição ao carrinho.
+## Allure Report
 
-### 2. Abrir carrinho via mini cart e validar itens
-- **Fluxo**: Adicionar produto (idem acima) > Clicar no mini cart > Verificar que há itens.
-- **Justificativa**: Testa a navegação para o carrinho e integridade dos dados do item adicionado.
+- Gerar o relatório HTML a partir dos resultados:
 
-### 3. Remover produto do carrinho e validar carrinho vazio
-- **Fluxo**: Adicionar produto > Abrir carrinho > Remover item > Validar mensagem "carrinho vazio".
-- **Justificativa**: Valida lógica de remoção, atualização de UI e estado final do carrinho.
+```bash
+npm run allure:generate
+npm run allure:report   # gera e abre o relatório
+```
 
-**Por que esses cenários?**: Refletem o ciclo completo de uso de um e-commerce (busca → compra → gerenciamento do carrinho). Cobrem interações comuns de usuários e validam comportamentos críticos da aplicação.
+Observação: o diretório `allure-results/` é preenchido automaticamente pela execução dos testes quando o plugin do Allure está ativo.
 
-## Próximos passos sugeridos
+## GitHub Actions
 
-- Integrar criação de dados via API (se disponível) para testes mais rápidos.
-- Adicionar testes de validação de preços, estoques e carrinho persistente (login).
-- Integrar execução em CI (GitHub Actions) e report visual (mochawesome).
-- Expandir seletores e comandos conforme novos cenários.
+- `/.github/workflows/automation-tests.yml`: roda automaticamente em push/PR e gera artefatos (vídeos, screenshots, Allure).
+- `/.github/workflows/manual-tests.yml`: execução manual via UI do GitHub (workflow_dispatch) com opções de escopo e navegador.
 
-## Observações técnicas
+## Limpeza de artefatos já versionados
 
-Este repositório reutiliza padrões do código Java fornecido:
-- `DriverFactory` ↔ `Cypress` (gerenciamento de navegador)
-- `BasePage` ↔ `Page Objects em JS` (encapsulamento de lógica)
-- `WaitUtils` ↔ `waitForJsAndJQuery()` (waits explícitos)
-- `retryClick` ↔ `smartClick` com fallback (robustez)
+Se você tiver comitado por engano pastas como `node_modules/`, `cypress/videos/`, `cypress/screenshots/` ou `allure-results/`, rode os comandos abaixo para removê-las do Git (preservando localmente):
 
-Os seletores foram adaptados para CSS (preferencialmente) com XPath disponível via `cypress-xpath` para casos complexos.
+```bash
+# remover do index (preserva localmente)
+git rm -r --cached node_modules || true
+git rm -r --cached cypress/videos || true
+git rm -r --cached cypress/screenshots || true
+git rm -r --cached allure-results || true
+git rm -r --cached allure-report || true
+
+git add .gitignore
+git commit -m "chore: remove artifacts from repo and update .gitignore"
+git push
+```
+
+## O que foi implementado
+
+- 3 cenários E2E para fluxo de carrinho (buscar → adicionar → remover).
+- Padrão Page Object e comandos utilitários (`smartClick`, `smartType`, `waitForJsAndJQuery`).
+- Captura de screenshots organizadas por nome do teste e gravação de vídeo (configurada em `cypress.config.js`).
+- Integração com `@shelex/cypress-allure-plugin` e scripts `npm` para gerar/abrir o relatório Allure.
+- Workflows GitHub Actions (automático e manual) para execução em CI.
+
+## Observações finais (para entrega)
+
+- Arquivos e pastas de artefatos (vídeos, screenshots, allure-results, node_modules) já estão listados em `.gitignore`.
+- `cypress/support/pages/userPage.js` foi removido (arquivo não utilizado).
+- Recomendo rodar `npm ci` em uma máquina limpa e executar `npm test` para validar a pipeline localmente antes do push final.
+
+## Contato
+
+Se precisar que eu crie o PR final, rode os comandos de limpeza acima e me autorize a executar o commit & push, ou eu posso te enviar os comandos prontos.
+
+Boa sorte na entrega — se quiser, eu preparo e abro o PR com a mensagem final de envio.

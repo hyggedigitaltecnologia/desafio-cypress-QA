@@ -27,6 +27,9 @@ jobs:
         with:
           node-version: '16'
 
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
@@ -40,9 +43,9 @@ jobs:
         if: always()
         uses: dorny/test-reporter@v1
         with:
-          name: 'Cypress Test Results - Chrome'
-          path: 'cypress/results/*.xml'
-          reporter: 'junit'
+          name: "Cypress E2E - Chrome"
+          path: "results/junit/*.xml"
+          reporter: "java-junit"
           fail-on-error: false
 
       - name: Generate Allure Report
@@ -55,11 +58,13 @@ jobs:
         run: |
           mkdir -p artifact/videos
           mkdir -p artifact/screenshots
+          mkdir -p artifact/junit
           mkdir -p artifact/allure-results
           mkdir -p artifact/allure-report
           
           cp -r cypress/videos/* artifact/videos/ || true
           cp -r cypress/screenshots/* artifact/screenshots/ || true
+          cp -r results/junit/* artifact/junit/ || true
           cp -r allure-results/* artifact/allure-results/ || true
           cp -r allure-report/* artifact/allure-report/ || true
 
@@ -67,15 +72,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-      
-                - name: Publish test results to GitHub
-                  if: always()
-                  uses: dorny/test-reporter@v1
-                  with:
-                    name: "Cypress E2E - Chrome"
-                    path: "results/junit/*.xml"
-                    reporter: "java-junit"
-                    fail-on-error: false
           name: cypress-test-results-chrome
           path: artifact
           retention-days: 30
@@ -92,10 +88,8 @@ jobs:
             
             if (fs.existsSync(allureReportPath)) {
               comment += '✅ Allure Report gerado com sucesso!\n';
-                    mkdir -p artifact/junit
               comment += '📊 Verifique os artefatos para detalhes completos.\n';
             } else {
-                    cp -r results/junit/* artifact/junit/ || true
               comment += '⚠️ Teste executado. Verifique os artefatos para mais detalhes.\n';
             }
             

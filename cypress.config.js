@@ -12,6 +12,13 @@ module.exports = defineConfig({
     video: true,
     videoCompression: 32,
     pageLoadTimeout: 90000,
+    // Reporter JUnit para publicar resultados no GitHub (dorny/test-reporter)
+    reporter: 'junit',
+    reporterOptions: {
+      mochaFile: 'results/junit/test-results-[hash].xml',
+      testsuitesTitle: 'Cypress E2E Suite',
+      toConsole: false
+    },
     env: {
       allure: true,
       allureReuseAfterSpec: true,

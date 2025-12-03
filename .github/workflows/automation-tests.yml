@@ -36,6 +36,15 @@ jobs:
         env:
           NODE_OPTIONS: --no-warnings --max-old-space-size=4096
 
+      - name: Publish test results to GitHub
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: 'Cypress Test Results - Chrome'
+          path: 'cypress/results/*.xml'
+          reporter: 'junit'
+          fail-on-error: false
+
       - name: Generate Allure Report
         if: always()
         run: npm run allure:generate
@@ -58,6 +67,15 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
+      
+                - name: Publish test results to GitHub
+                  if: always()
+                  uses: dorny/test-reporter@v1
+                  with:
+                    name: "Cypress E2E - Chrome"
+                    path: "results/junit/*.xml"
+                    reporter: "java-junit"
+                    fail-on-error: false
           name: cypress-test-results-chrome
           path: artifact
           retention-days: 30
@@ -74,8 +92,10 @@ jobs:
             
             if (fs.existsSync(allureReportPath)) {
               comment += '✅ Allure Report gerado com sucesso!\n';
+                    mkdir -p artifact/junit
               comment += '📊 Verifique os artefatos para detalhes completos.\n';
             } else {
+                    cp -r results/junit/* artifact/junit/ || true
               comment += '⚠️ Teste executado. Verifique os artefatos para mais detalhes.\n';
             }
             

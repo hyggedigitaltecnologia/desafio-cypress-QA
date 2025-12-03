@@ -1,0 +1,89 @@
+name: Automation Tests - Cypress QA
+run-name: Prova Automacao - Cypress Web Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  cypress-tests:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
+    strategy:
+      matrix:
+        browser: [ chrome, electron ]
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Cypress tests (${{ matrix.browser }})
+        run: npm run cy:run -- --browser ${{ matrix.browser }}
+        continue-on-error: true
+
+      - name: Generate Allure Report
+        if: always()
+        run: npm run allure:generate
+        continue-on-error: true
+
+      - name: Package test artifacts
+        if: always()
+        run: |
+          mkdir -p artifact/videos
+          mkdir -p artifact/screenshots
+          mkdir -p artifact/allure-results
+          mkdir -p artifact/allure-report
+          
+          cp -r cypress/videos/* artifact/videos/ || true
+          cp -r cypress/screenshots/* artifact/screenshots/ || true
+          cp -r allure-results/* artifact/allure-results/ || true
+          cp -r allure-report/* artifact/allure-report/ || true
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-test-results-${{ matrix.browser }}
+          path: artifact
+          retention-days: 30
+
+      - name: Comment PR with test results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const allureReportPath = 'allure-report/index.html';
+            
+            let comment = '## 🧪 Cypress Test Results - ${{ matrix.browser }}\n\n';
+            
+            if (fs.existsSync(allureReportPath)) {
+              comment += '✅ Allure Report gerado com sucesso!\n';
+              comment += '📊 Verifique os artefatos para detalhes completos.\n';
+            } else {
+              comment += '⚠️ Teste executado. Verifique os artefatos para mais detalhes.\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

@@ -1,0 +1,106 @@
+name: Manual Run - Automation Tests
+run-name: Manual Run - ${{ inputs.test_scope }} Tests (${{ inputs.browser }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        type: choice
+        description: 'Quais testes devem ser executados?'
+        required: true
+        default: all
+        options:
+          - all
+          - search-add-cart
+          - view-cart
+          - remove-item
+      browser:
+        type: choice
+        description: 'Qual navegador deseja usar?'
+        required: true
+        default: chrome
+        options:
+          - chrome
+          - electron
+      generate_report:
+        type: boolean
+        description: 'Gerar relatório Allure?'
+        required: false
+        default: true
+
+jobs:
+  manual-tests:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Cypress tests - ${{ inputs.test_scope }}
+        run: |
+          SCOPE="${{ inputs.test_scope }}"
+          BROWSER="${{ inputs.browser }}"
+          
+          echo "🚀 Executando testes: $SCOPE no navegador: $BROWSER"
+          
+          if [ "$SCOPE" = "search-add-cart" ]; then
+            npm run cy:run -- --browser $BROWSER --spec "cypress/e2e/netshoes-carrinho.spec.js" --grep "Deve buscar um produto"
+          elif [ "$SCOPE" = "view-cart" ]; then
+            npm run cy:run -- --browser $BROWSER --spec "cypress/e2e/netshoes-carrinho.spec.js" --grep "Deve adicionar produto"
+          elif [ "$SCOPE" = "remove-item" ]; then
+            npm run cy:run -- --browser $BROWSER --spec "cypress/e2e/netshoes-carrinho.spec.js" --grep "Deve remover"
+          else
+            npm run cy:run -- --browser $BROWSER
+          fi
+        continue-on-error: true
+
+      - name: Generate Allure Report
+        if: ${{ always() && inputs.generate_report }}
+        run: npm run allure:generate
+        continue-on-error: true
+
+      - name: Package test artifacts
+        if: always()
+        run: |
+          mkdir -p artifact/videos
+          mkdir -p artifact/screenshots
+          mkdir -p artifact/allure-results
+          mkdir -p artifact/allure-report
+          
+          cp -r cypress/videos/* artifact/videos/ || true
+          cp -r cypress/screenshots/* artifact/screenshots/ || true
+          cp -r allure-results/* artifact/allure-results/ || true
+          cp -r allure-report/* artifact/allure-report/ || true
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manual-run-${{ inputs.test_scope }}-${{ inputs.browser }}
+          path: artifact
+          retention-days: 30
+
+      - name: Generate Summary
+        if: always()
+        run: |
+          echo "## 📋 Resumo da Execução Manual" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Escopo**: ${{ inputs.test_scope }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Navegador**: ${{ inputs.browser }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Relatório Allure**: ${{ inputs.generate_report }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Teste concluído! Confira os artefatos para detalhes completos." >> $GITHUB_STEP_SUMMARY

@@ -16,12 +16,11 @@ on:
           - remove-item
       browser:
         type: choice
-        description: 'Qual navegador deseja usar?'
+        description: 'Qual navegador deseja usar? (apenas chrome disponível)'
         required: true
         default: chrome
         options:
           - chrome
-          - electron
       generate_report:
         type: boolean
         description: 'Gerar relatório Allure?'

@@ -16,10 +16,7 @@ jobs:
       checks: write
       pull-requests: write
 
-    strategy:
-      matrix:
-        browser: [ chrome, electron ]
-      fail-fast: false
+    # Executar somente em Chrome (removido matrix para evitar execução em Electron)
 
     steps:
       - name: Checkout
@@ -29,13 +26,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Cypress tests (${{ matrix.browser }})
-        run: npm run cy:run -- --browser ${{ matrix.browser }}
+      - name: Run Cypress tests (chrome)
+        run: npm run cy:run -- --browser chrome
         continue-on-error: true
 
       - name: Generate Allure Report
@@ -60,7 +56,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-test-results-${{ matrix.browser }}
+          name: cypress-test-results-chrome
           path: artifact
           retention-days: 30
 
@@ -72,7 +68,7 @@ jobs:
             const fs = require('fs');
             const allureReportPath = 'allure-report/index.html';
             
-            let comment = '## 🧪 Cypress Test Results - ${{ matrix.browser }}\n\n';
+            let comment = '## 🧪 Cypress Test Results - chrome\n\n';
             
             if (fs.existsSync(allureReportPath)) {
               comment += '✅ Allure Report gerado com sucesso!\n';

@@ -111,9 +111,3 @@ git push
 - Arquivos e pastas de artefatos (vídeos, screenshots, allure-results, node_modules) já estão listados em `.gitignore`.
 - `cypress/support/pages/userPage.js` foi removido (arquivo não utilizado).
 - Recomendo rodar `npm ci` em uma máquina limpa e executar `npm test` para validar a pipeline localmente antes do push final.
-
-## Contato
-
-Se precisar que eu crie o PR final, rode os comandos de limpeza acima e me autorize a executar o commit & push, ou eu posso te enviar os comandos prontos.
-
-Boa sorte na entrega — se quiser, eu preparo e abro o PR com a mensagem final de envio.
